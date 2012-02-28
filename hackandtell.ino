@@ -25,28 +25,21 @@ char sponsorName[] = "SysEleven";
 byte inByte;
 
 void setup() {
-  
-  
-  
   pinMode(firePin, INPUT);           // set pin to input
   digitalWrite(firePin, HIGH);       // turn on pullup resistors
-
   pinMode(upPin, INPUT);           // set pin to input
   digitalWrite(upPin, HIGH);       // turn on pullup resistors
-
   pinMode(downPin, INPUT);           // set pin to input
   digitalWrite(downPin, HIGH);       // turn on pullup resistors
 
   pinMode(ledPin, OUTPUT);
 
   TV.begin(PAL);
-  
   TV.select_font(font8x8);
 }
 
 
 void loop() {
-  
   TV.clear_screen();
   TV.bitmap(14,0, hntlogo_bmp);
   TV.delay(500);
@@ -55,7 +48,6 @@ void loop() {
   TV.delay(500);
   analogWrite(ledPin, 0);
   TV.delay(500);
-  
 
   int selection = showMainMenu();
 
@@ -104,7 +96,6 @@ void serialLoop() {
     }
     
   } // end while
-  
 }
 
 void pizzaLoop() {
