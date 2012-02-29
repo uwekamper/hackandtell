@@ -1,3 +1,5 @@
+![The Hack and Tell Logo on a Green Screen](http://distilleryimage9.instagram.com/46d1c8f2624611e1a87612313804ec91_7.jpg)
+
 This is the C++ code for an Arduino-based count-down timer. It displays a five minute countdown 
 with big numbers on a TV screen. It uses Arduino TVOut library (see: http://code.google.com/p/arduino-tvout/ )
 for PAL or NTSC composite video output. The time duration of the count-down can be changed in the source code.
