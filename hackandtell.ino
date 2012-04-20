@@ -21,7 +21,6 @@ int menuStart = 8; // y coordinate where the menu border starts
 int timerDefault = 300;
 int timerState = timerDefault;
 
-char sponsorName[] = "SysEleven";
 byte inByte;
 
 void setup() {
@@ -44,7 +43,11 @@ void loop() {
   TV.bitmap(14,0, hntlogo_bmp);
   TV.delay(500);
  
-  analogWrite(ledPin, 255);
+  for (int r = 0; r < 256; r++) { 
+    analogWrite(ledPin, r);
+    delay(5);
+  } 
+  
   TV.delay(500);
   analogWrite(ledPin, 0);
   TV.delay(500);
@@ -67,13 +70,16 @@ void timerLoop() {
     int selection = showTimerMenu();
     
     if (selection == 0) {
-      countDown();
+      showApplause();
     }
     else if (selection == 1) {
-      timerState = timerDefault;
       countDown();
     }
     else if (selection == 2) {
+      timerState = timerDefault;
+      countDown();
+    }
+    else if (selection == 3) {
       return;
     }
   }
@@ -103,10 +109,8 @@ void pizzaLoop() {
   while (true) {
     if (!state) {
       TV.clear_screen();
-      TV.print(0,0, "ENJOY THE PIZZA");
+      TV.print(0,0, "ENJOY THE FOOD");
       TV.bitmap(30,20, pizza_bmp);
-      TV.print(0,80, "SPONSORED BY:");
-      TV.print(0,88, sponsorName);
     }
     else {
       TV.clear_screen();
@@ -172,15 +176,16 @@ int showTimerMenu() {
   TV.draw_rect(0, 0, 128, 7, WHITE, WHITE);  
   TV.print(2,0, "TIMER");
   TV.draw_line(0, menuStart, 127, menuStart, BLACK);
-  TV.draw_rect(0, menuStart+1, 102, 50, WHITE, BLACK);  
+  TV.draw_rect(0, menuStart+1, 102, 60, WHITE, BLACK); 
+  TV.println(12,menuStart+10, "APPLAUSE"); 
   if (timerState == timerDefault) {
-    TV.println(12,menuStart+10, "BEGIN");
+    TV.println(12,menuStart+20, "BEGIN");
   }
   else {
-    TV.println(12,menuStart+10, "CONTINUE");
+    TV.println(12,menuStart+20, "CONTINUE");
   }
-  TV.println(12,menuStart+20, "RESET");
-  TV.println(12,menuStart+30, "MAIN MENU");
+  TV.println(12,menuStart+30, "RESET");
+  TV.println(12,menuStart+40, "MAIN MENU");
 
   TV.delay(500);
   drawMenuSelection(selection);
@@ -193,14 +198,14 @@ int showTimerMenu() {
       return selection;
     }
     else if (joyval == 2) {
-      selection = (selection - 1) % 3;
+      selection = (selection - 1) % 4;
     }
     else if (joyval == 3) {
-      selection = (selection + 1) % 3;
+      selection = (selection + 1) % 4;
     }
     if (selection < 0) 
-      selection = 2;
-    if (selection > 2)
+      selection = 3;
+    if (selection > 3)
       selection = 0;
     drawMenuSelection(selection);
     TV.delay(20);
@@ -211,7 +216,7 @@ int showTimerMenu() {
 
 
 void drawMenuSelection(int selection) {
-  TV.draw_rect(3, menuStart+2, 8, 40, BLACK, BLACK);
+  TV.draw_rect(3, menuStart+2, 8, 45, BLACK, BLACK);
   int y = menuStart + 10 + (selection * 10);
   TV.print(2, y, ">");
 }
@@ -297,6 +302,10 @@ void countDown()
     timerState--;  
   }
   timerState = timerDefault;
+  showApplause();  
+}
+
+void showApplause() {
   TV.clear_screen();
   
   TV.bitmap(9, 45, applause_bmp);
@@ -321,7 +330,7 @@ void countDown()
         return;
       }
     }
-  }  
+  }
 }
 
 void displayDigitsOf(int number, boolean seconds) {
