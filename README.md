@@ -1,7 +1,9 @@
-Hack-And-Tell Count-Down Timer
+![Berlin Hack-And-Tell](http://berlin.hackandtell.org) Count-Down Timer
 ==============================
-This project was done for Berlin Hack-And-Tell (http://www.meetup.com/berlin-hack-and-tell). This is monthly event where
-hackers have 5 minutes to show off their projects. This count-down timer keeps track of the time.
+[Berlin Hack-And-Tell](http://berlin.hackandtell.org) is a monthly event 
+at c-base, Berlin. Hackers can hop on stage to show off their projects. 
+Everyone has exactly 5 minutes for their presentations. This count-down 
+timer keeps track of the time.
 
 Project Description
 -------------------
