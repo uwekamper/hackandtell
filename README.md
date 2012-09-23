@@ -1,4 +1,4 @@
-![Berlin Hack-And-Tell](http://berlin.hackandtell.org) Count-Down Timer
+[Berlin Hack-And-Tell](http://berlin.hackandtell.org) Count-Down Timer
 ==============================
 [Berlin Hack-And-Tell](http://berlin.hackandtell.org) is a monthly event 
 at c-base, Berlin. Hackers can hop on stage to show off their projects. 
