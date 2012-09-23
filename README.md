@@ -18,6 +18,7 @@ be attached to a PWM-capable pin of the arduino. We use this to light a big "APP
 
 The program has a graphical menu which is controlled by a classic digital joystick oder gamepad like those found on the Atari 2600 or those
 for the Commodore 64. We use an ancient Competition Pro joystick like this one:
+
 ![Competition Pro](http://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Competition_pro_first_version_45deg.png/220px-Competition_pro_first_version_45deg.png)
 
 Apart from the count-down function the code implements a simple serial monitor and a message display.
