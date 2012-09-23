@@ -4,88 +4,96 @@
 #include "applause.h"
 #include "hntlogo.h"
 #include "pizza.h"
+#include "hntlogo.h"
 
 /**
  * A countdown timer for Berlin Hack-And-Tell.  
  */
 
 TVout TV;
-int ledPin = 3;
 
-int firePin = 2;
-int upPin = 5;
-int downPin = 4;
+#define LEDPIN 3
+#define FIREPIN 2
+#define UPPIN 5
+#define DOWNPIN 4
 
-int menuStart = 8; // y coordinate where the menu border starts
+#define menuStart 8 // y coordinate where the menu border starts
 
 int timerDefault = 300;
 int timerState = timerDefault;
 
-byte inByte;
+// byte inByte;
+byte joyval;
+byte selection;
+// boolean state = false;
+unsigned long now; // used for waiting loops
 
 void setup() {
-  pinMode(firePin, INPUT);           // set pin to input
-  digitalWrite(firePin, HIGH);       // turn on pullup resistors
-  pinMode(upPin, INPUT);           // set pin to input
-  digitalWrite(upPin, HIGH);       // turn on pullup resistors
-  pinMode(downPin, INPUT);           // set pin to input
-  digitalWrite(downPin, HIGH);       // turn on pullup resistors
+  pinMode(FIREPIN, INPUT);           // set pin to input
+  digitalWrite(FIREPIN, HIGH);       // turn on pullup resistors
+  pinMode(UPPIN, INPUT);           // set pin to input
+  digitalWrite(UPPIN, HIGH);       // turn on pullup resistors
+  pinMode(DOWNPIN, INPUT);           // set pin to input
+  digitalWrite(DOWNPIN, HIGH);       // turn on pullup resistors
 
-  pinMode(ledPin, OUTPUT);
+  pinMode(LEDPIN, OUTPUT);
 
-  TV.begin(PAL);
+  TV.begin(PAL, 120, 96);
   TV.select_font(font8x8);
 }
 
-
 void loop() {
   TV.clear_screen();
-  TV.bitmap(14,0, hntlogo_bmp);
-  TV.delay(500);
- 
-  for (int r = 0; r < 256; r++) { 
-    analogWrite(ledPin, r);
-    delay(5);
-  } 
-  
-  TV.delay(500);
-  analogWrite(ledPin, 0);
+  TV.bitmap(10,0, hntlogo_bmp);
   TV.delay(500);
 
-  int selection = showMainMenu();
+  analogWrite(LEDPIN, 254);
 
-  if (selection == 0) {
+  TV.delay(500);
+  analogWrite(LEDPIN, 0);
+  TV.delay(500);
+
+  joyval = showMainMenu();
+
+  if (joyval == 0) {
     timerLoop();
   }
-  else if (selection == 1) {
+  else if (joyval == 1) {
     serialLoop();  
   }
-  else if (selection == 2) {
+  else if (joyval == 2) {
     pizzaLoop();
+  }
+  else if (joyval == 3) {
+    logoLoop();
   }
 }
 
 void timerLoop() {
   while(true) {
-    int selection = showTimerMenu();
-    
-    if (selection == 0) {
+    joyval = showTimerMenu();
+
+    if (joyval == 0) {
       showApplause();
     }
-    else if (selection == 1) {
+    else if (joyval == 1) {
       countDown();
     }
-    else if (selection == 2) {
+    else if (joyval == 2) {
       timerState = timerDefault;
       countDown();
     }
-    else if (selection == 3) {
+    else if (joyval == 3) {
+      changeTimeLoop();
+    }
+    else if (joyval == 4) {
       return;
     }
   }
 }
 
 void serialLoop() {
+  byte inByte;
   Serial.begin(9600);
   TV.clear_screen();
   //TV.select_font(font8x8);
@@ -100,12 +108,27 @@ void serialLoop() {
       inByte = Serial.read();
       TV.print(inByte);
     }
-    
+
   } // end while
+}
+
+void logoLoop() {
+  TV.clear_screen();
+  TV.bitmap(10,0, hntlogo_bmp);
+
+  // wait for 10 second (1000 ms)
+  //unsigned long 
+  now = millis();
+  while( true ) { 
+    if (checkJoystick() == 1) {
+      return;
+    } 
+  }
 }
 
 void pizzaLoop() {
   boolean state = false;
+
   while (true) {
     if (!state) {
       TV.clear_screen();
@@ -114,11 +137,12 @@ void pizzaLoop() {
     }
     else {
       TV.clear_screen();
-      TV.bitmap(14,0, hntlogo_bmp);
+      TV.bitmap(10,0, hntlogo_bmp);
     }
-    
+
     // wait for 10 second (1000 ms)
-    unsigned long now = millis();
+    //unsigned long 
+    now = millis();
     for(int i = 0; i < 100; i++) {
 
       while( millis() < (now + 10000)) { 
@@ -131,66 +155,59 @@ void pizzaLoop() {
   }
 }
 
-
-int showMainMenu() {
-
-  int selection = 0;
-  TV.draw_rect(0, 0, 128, 7, WHITE, WHITE);  
-  TV.print(2,0, "MAIN MENU");
-  TV.draw_line(0, menuStart, 127, menuStart, BLACK);
-  TV.draw_rect(0, menuStart+1, 102, 50, WHITE, BLACK);  
-  TV.println(12,menuStart+10, "COUNT-DOWN");
-  TV.println(12,menuStart+20, "SERIAL MON.");
-  TV.println(12,menuStart+30, "PIZZA");
-
-  TV.delay(500);
-  drawMenuSelection(selection);
+void changeTimeLoop() {
+  TV.clear_screen();
+  TV.print(0,0, "Use up/down");
+  TV.print(0,10, "to change");
+  TV.print(0,30, "Fire to save");
+  TV.print(25, 62, "seconds");
+  boolean state = true; // if changed, will redraw
   while(true) {
-    int joyval = checkJoystick();
+
+    if (state) {
+      TV.draw_rect(25, 48, 55, 12, WHITE, BLACK);
+      TV.print(40, 50, timerDefault);
+      state = false;
+    }
+
+    joyval = checkJoystick();
     if (joyval == 0) {
       continue;
     }
     else if (joyval == 1) {
-      return selection;
+      break;
     }
     else if (joyval == 2) {
-      selection = (selection - 1) % 3;
+      timerDefault = timerDefault + 1;
+      state = true;
     }
     else if (joyval == 3) {
-      selection = (selection + 1) % 3;
+      timerDefault = timerDefault - 1;
+      state = true;
     }
-    if (selection < 0) 
-      selection = 2;
-    if (selection > 2)
-      selection = 0;
-    drawMenuSelection(selection);
-    TV.delay(20);
-  }
 
-  return selection;
+    TV.delay(20);
+  } // end while
+  return;
 }
 
-int showTimerMenu() {
+int showMainMenu() {
 
-  int selection = 0;
-  TV.draw_rect(0, 0, 128, 7, WHITE, WHITE);  
-  TV.print(2,0, "TIMER");
-  TV.draw_line(0, menuStart, 127, menuStart, BLACK);
-  TV.draw_rect(0, menuStart+1, 102, 60, WHITE, BLACK); 
-  TV.println(12,menuStart+10, "APPLAUSE"); 
-  if (timerState == timerDefault) {
-    TV.println(12,menuStart+20, "BEGIN");
-  }
-  else {
-    TV.println(12,menuStart+20, "CONTINUE");
-  }
-  TV.println(12,menuStart+30, "RESET");
-  TV.println(12,menuStart+40, "MAIN MENU");
+  selection = 0;
+  
+  TV.draw_rect(0, 0, 120, 7, WHITE, WHITE);  
+  TV.print(2,0, "MAIN MENU");
+  TV.draw_line(0, menuStart, 119, menuStart, BLACK);
+  TV.draw_rect(0, menuStart+1, 110, 60, WHITE, BLACK);  
+  TV.println(12,menuStart+10, "COUNT-DOWN");
+  TV.println(12,menuStart+20, "SERIAL MON.");
+  TV.println(12,menuStart+30, "PIZZA");
+  TV.println(12,menuStart+40, "F#$KING LOGO");
 
   TV.delay(500);
   drawMenuSelection(selection);
   while(true) {
-    int joyval = checkJoystick();
+    joyval = checkJoystick();
     if (joyval == 0) {
       continue;
     }
@@ -214,9 +231,53 @@ int showTimerMenu() {
   return selection;
 }
 
+int showTimerMenu() {
 
-void drawMenuSelection(int selection) {
-  TV.draw_rect(3, menuStart+2, 8, 45, BLACK, BLACK);
+  selection = 0;
+  TV.draw_rect(0, 0, 128, 7, WHITE, WHITE);  
+  TV.print(2,0, "TIMER");
+  TV.draw_line(0, menuStart, 127, menuStart, BLACK);
+  TV.draw_rect(0, menuStart+1, 102, 60, WHITE, BLACK); 
+  TV.println(12,menuStart+10, "APPLAUSE"); 
+  if (timerState == timerDefault) {
+    TV.println(12,menuStart+20, "BEGIN");
+  }
+  else {
+    TV.println(12,menuStart+20, "CONTINUE");
+  }
+  TV.println(12,menuStart+30, "RESET");
+  TV.println(12,menuStart+40, "CHANGE TIME");
+  TV.println(12,menuStart+50, "MAIN MENU");
+
+  TV.delay(500);
+  drawMenuSelection(selection);
+  while(true) {
+    joyval = checkJoystick();
+    if (joyval == 0) {
+      continue;
+    }
+    else if (joyval == 1) {
+      return selection;
+    }
+    else if (joyval == 2) {
+      selection = (selection - 1) % 5;
+    }
+    else if (joyval == 3) {
+      selection = (selection + 1) % 5;
+    }
+    if (selection < 0) 
+      selection = 4;
+    if (selection > 4)
+      selection = 0;
+    drawMenuSelection(selection);
+    TV.delay(20);
+  }
+
+  return selection;
+}
+
+inline void drawMenuSelection(int selection) {
+  TV.draw_rect(3, menuStart+2, 8, 55, BLACK, BLACK);
   int y = menuStart + 10 + (selection * 10);
   TV.print(2, y, ">");
 }
@@ -227,27 +288,26 @@ void drawMenuSelection(int selection) {
  * returns 2, if up was pressed,
  * returns 3, if down was pressed.
  */
-int checkJoystick() {
-  if (checkPin(firePin) == true) {
+inline byte checkJoystick() {
+  if (checkPin(FIREPIN) == true) {
     return 1;
   }
-  else if (checkPin(upPin) == true) {
+  else if (checkPin(UPPIN) == true) {
     return 2;
   }
-  else if (checkPin(downPin) == true) {
+  else if (checkPin(DOWNPIN) == true) {
     return 3;
   }
   return 0;
 }
 
-boolean checkPin(int pin) {
+inline boolean checkPin(int pin) {
   int value = digitalRead(pin);
 
   if (value == LOW) {
     TV.delay(100);
     int value2 = digitalRead(pin);
     if (value2 == LOW) {
-
       return true;
     }
   }
@@ -257,13 +317,15 @@ boolean checkPin(int pin) {
 
 
 // draw the two points between minutes and seconds
-void drawPts() {
-  TV.set_pixel(64, 50, WHITE);
-  TV.set_pixel(64, 60, WHITE);
+inline void drawPts() {
+  TV.set_pixel(59, 50, WHITE);
+  TV.set_pixel(59, 60, WHITE);
 }
 
 void countDown()
 {
+  byte delaycycles = 49;
+  
   if (timerState == timerDefault)
   {
     TV.clear_screen();
@@ -280,7 +342,6 @@ void countDown()
     TV.delay(800);
   }
   TV.clear_screen();
-  drawPts();
   int seconds, minutes;
   while(timerState >= 0) {
     seconds = timerState % 60;
@@ -288,17 +349,29 @@ void countDown()
 
     displayDigitsOf(seconds, true);
     displayDigitsOf(minutes, false);
-
+    drawPts();
     // wait for 1 second (1000 ms)
-    unsigned long now = millis();
-    for(int i = 0; i < 100; i++) {
-
-      while( millis() < (now + 1000)) { 
-        if (checkJoystick() == 1) {
-          return;
-        } 
-      }
+    // unsigned long 
+    now = millis();
+    
+    // time resolution is 16ms in PAL mode, therefor we do one second 
+    // with 62 cycles (992 ms) and one second with 63 cycles (1008 ms)
+    // to cancel out the error.
+    for(int i = 0; i < delaycycles; i++) {
+      
+      if (checkJoystick() == 1) {
+        return;
+      } 
+      TV.delay(16);
     }
+    
+    if (delaycycles == 49) {
+      delaycycles = 50;
+    }
+    else {
+      delaycycles = 49;
+    }
+    
     timerState--;  
   }
   timerState = timerDefault;
@@ -307,26 +380,27 @@ void countDown()
 
 void showApplause() {
   TV.clear_screen();
-  
-  TV.bitmap(9, 45, applause_bmp);
+
+  TV.bitmap(1, 45, applause_bmp);
 
   int currentLedState = 0;
   while (true) {
     if (currentLedState == 0) {
       currentLedState = 255;
-      TV.draw_rect(5, 40, 122, 26, WHITE);
+      TV.draw_rect(0, 40, 118, 26, WHITE);
     }
     else {
       currentLedState = 0;
-      TV.draw_rect(5, 40, 122, 26, BLACK);
+      TV.draw_rect(0, 40, 118, 26, BLACK);
     }
-    analogWrite(ledPin, currentLedState);
-    
+    analogWrite(LEDPIN, currentLedState);
+
     // wait for 1 second (1000 ms)
-    unsigned long now = millis();
+    //unsigned long 
+    now = millis();
     while( millis() < (now + 300)) { 
       if (checkJoystick() >= 1) {
-        analogWrite(ledPin, 0);
+        analogWrite(LEDPIN, 0);
         return;
       }
     }
@@ -339,22 +413,22 @@ void displayDigitsOf(int number, boolean seconds) {
 
   // seconds are always printed with leading zeros
   if(seconds) {
-    drawNothing(66, 30);
-    drawNumber(66, 30, ten);
-    drawNothing(97, 30);
-    drawNumber(97, 30, one);
+    drawNothing(60, 30);
+    drawNumber(60, 30, ten);
+    drawNothing(90, 30);
+    drawNumber(90, 30, one);
   } 
   else {
     // do not print leading zeros
     if (ten < 1) {
-      drawNothing(2, 30);
+      drawNothing(0, 30);
     }
     else {
-      drawNothing(2, 30);
-      drawNumber(2, 30, ten);
+      drawNothing(0, 30);
+      drawNumber(0, 30, ten);
     }
-    drawNothing(32, 30);
-    drawNumber(32, 30, one);
+    drawNothing(28, 30);
+    drawNumber(28, 30, one);
   }
 }
 
@@ -471,6 +545,7 @@ void drawNine(int x, int y) {
 void drawNothing(int x, int y) {
   TV.draw_rect(x, y, 30, 52, BLACK, BLACK);
 }
+
 
 
 
